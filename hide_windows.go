@@ -5,36 +5,24 @@ import (
 	"syscall"
 )
 
-var kernel32, user32 syscall.Handle
-
-func init() {
-	var err error
-	kernel32, err = syscall.LoadLibrary("kernel32.dll")
-	if err != nil {
-		Fatal(err)
-	}
-	user32, err = syscall.LoadLibrary("user32.dll")
-	if err != nil {
-		Fatal(err)
-	}
-}
-
 var (
-	SW_HIDE = uintptr(0)
-	SW_SHOW = uintptr(5)
+	GetConsoleWindow = syscall.NewLazyDLL("kernel32.dll").NewProc("GetConsoleWindow")
+	ShowWindow       = syscall.NewLazyDLL("user32.dll").NewProc("ShowWindow")
+)
+
+const (
+	SW_HIDE = 0
+	SW_SHOW = 5
 )
 
 func HideConsole() {
-	handle, _, _ := Syscall3ByName(kernel32, "GetConsoleWindow", 0, 0, 0, 0)
-
-	Syscall3ByName(user32, "ShowWindow", 2, handle, SW_HIDE, 0)
-
+	handle, _, _ := GetConsoleWindow.Call()
+	ShowWindow.Call(handle, SW_HIDE)
 }
 
 func ShowConsole() {
-	handle, _, _ := Syscall3ByName(kernel32, "GetConsoleWindow", 0, 0, 0, 0)
-
-	Syscall3ByName(user32, "ShowWindow", 2, handle, SW_SHOW, 0)
+	handle, _, _ := GetConsoleWindow.Call()
+	ShowWindow.Call(handle, SW_SHOW)
 
 }
 
